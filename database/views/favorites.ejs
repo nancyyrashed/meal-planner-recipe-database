@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Favorite Recipes</title>
+  <link rel="stylesheet" href="/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <h1>Your Favorite Recipes</h1>
+  <nav>
+    <button class="top-right-button" onclick="location.href='/search-page'">Search and Filter Recipes</button>
+    <a href="/meal-planner" class="button">Meal Planner</a>
+    <a href="/" class="button home-button">Home</a>
+  </nav>  
+
+  <div class="favorites-container">
+    <form id="favoritesSearchForm">
+      <select id="favoritesTag" name="tag">
+        <option value="">Filter by tag</option>
+      </select>
+      <select id="favoritesSearchTerm" name="searchTerm">
+        <option value="">Filter by search term</option>
+      </select>
+      <select id="favoritesIngredient" name="ingredient">
+        <option value="">Filter by ingredient</option>
+      </select>
+      <select id="favoritesSortOrder" name="sort">
+        <option value="">Sort by</option>
+        <option value="alphabetical">Alphabetical</option>
+        <option value="servings">Number of Servings</option>
+      </select>
+      <button type="submit">Search</button>
+      <button type="button" id="favoritesClearFilters">Clear Filters</button>
+    </form>
+  
+    <div id="favoritesResults"></div>
+    <div id="pagination"></div>
+  </div>
+  
+
+  <script>
+    // Fetch filters dynamically and populate dropdowns
+    async function fetchFilters() {
+      try {
+        const response = await fetch("/filters");
+        const { tags, searchTerms, ingredients } = await response.json();
+
+        const tagDropdown = document.getElementById("favoritesTag");
+        const searchTermDropdown = document.getElementById("favoritesSearchTerm");
+        const ingredientDropdown = document.getElementById("favoritesIngredient");
+
+        // Populate tags
+        tags.forEach(tag => {
+          const option = document.createElement("option");
+          option.value = tag.tag_name;
+          option.textContent = tag.tag_name;
+          tagDropdown.appendChild(option);
+        });
+
+        // Populate search terms
+        searchTerms.forEach(term => {
+          const option = document.createElement("option");
+          option.value = term.search_term;
+          option.textContent = term.search_term;
+          searchTermDropdown.appendChild(option);
+        });
+
+        // Populate ingredients
+        ingredients.forEach(ingredient => {
+          const option = document.createElement("option");
+          option.value = ingredient.ingredient_name;
+          option.textContent = ingredient.ingredient_name;
+          ingredientDropdown.appendChild(option);
+        });
+      } catch (error) {
+        console.error("Error fetching filters:", error);
+      }
+    }
+
+    // Fetch and render favorites with filters
+    async function fetchFavorites(tag = "", searchTerm = "", ingredient = "", sort = "", page = 1) {
+      try {
+        const response = await fetch(`/favorites?tag=${tag}&searchTerm=${searchTerm}&ingredient=${ingredient}&sort=${sort}&page=${page}`);
+        const { favorites, totalPages } = await response.json();
+
+        const resultsDiv = document.getElementById("favoritesResults");
+        const paginationDiv = document.getElementById("pagination");
+
+        if (favorites.length) {
+          resultsDiv.innerHTML = favorites.map(fav => `
+            <div class="recipe-card">
+              <h3>${fav.name}</h3>
+              <p><strong>Description:</strong> ${fav.description || "N/A"}</p>
+              <p><strong>Servings:</strong> ${fav.servings || "N/A"}</p>
+              <p><strong>Ingredients:</strong> ${fav.ingredients || "N/A"}</p>
+              <button class="remove-favorite-button" data-recipe-id="${fav.recipe_id}">
+                Remove from Favorites
+              </button>
+            </div>
+          `).join("");
+
+          // Add event listeners for "Remove from Favorites" buttons
+          document.querySelectorAll(".remove-favorite-button").forEach(button => {
+            button.addEventListener("click", async () => {
+              const recipeId = button.dataset.recipeId;
+              try {
+                await fetch("/favorites/remove", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ recipe_id: recipeId }),
+                });
+                fetchFavorites(tag, searchTerm, ingredient, sort, page);
+              } catch (error) {
+                console.error("Error removing recipe from favorites:", error);
+              }
+            });
+          });
+
+          // Render pagination
+          paginationDiv.innerHTML = totalPages > 1
+            ? Array.from({ length: totalPages }, (_, i) => `
+              <button 
+                class="pagination-button ${page === i + 1 ? "active" : ""}" 
+                data-page="${i + 1}">
+                ${i + 1}
+              </button>
+            `).join("")
+            : "";
+
+          // Add event listeners for pagination buttons
+          document.querySelectorAll(".pagination-button").forEach(button => {
+            button.addEventListener("click", () => {
+              const selectedPage = parseInt(button.dataset.page);
+              fetchFavorites(tag, searchTerm, ingredient, sort, selectedPage);
+            });
+          });
+        } else {
+          resultsDiv.innerHTML = "<p>No favorite recipes found.</p>";
+          paginationDiv.innerHTML = "";
+        }
+      } catch (error) {
+        console.error("Error fetching favorites:", error);
+      }
+    }
+
+// Or automatically refresh after adding a favorite
+const addFavoriteAndRefresh = async (recipeId) => {
+  try {
+    const response = await fetch("/favorites/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipe_id: recipeId }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      fetchFavorites(); // Refresh favorites list
+    } else {
+      console.error(data.message);
+      alert("Failed to add recipe to favorites.");
+    }
+  } catch (error) {
+    console.error("Error adding recipe to favorites:", error);
+  }
+};
+
+    // Initialize filters and results
+    fetchFilters();
+    fetchFavorites();
+
+    // Add event listeners to the form
+    document.getElementById("favoritesSearchForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const tag = document.getElementById("favoritesTag").value;
+      const searchTerm = document.getElementById("favoritesSearchTerm").value;
+      const ingredient = document.getElementById("favoritesIngredient").value;
+      const sort = document.getElementById("favoritesSortOrder").value;
+      fetchFavorites(tag, searchTerm, ingredient, sort);
+    });
+
+    // Clear filters
+    document.getElementById("favoritesClearFilters").addEventListener("click", () => {
+      document.getElementById("favoritesTag").value = "";
+      document.getElementById("favoritesSearchTerm").value = "";
+      document.getElementById("favoritesIngredient").value = "";
+      document.getElementById("favoritesSortOrder").value = "";
+      fetchFavorites();
+    });
+  </script>
+</body>
+</html>

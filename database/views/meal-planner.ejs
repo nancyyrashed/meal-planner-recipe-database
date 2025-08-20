@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Planner</title>
+  <link rel="stylesheet" type="text/css" href="/main.css">
+</head>
+<body>
+    <h1>Personalized Meal Planner</h1>
+  <nav>
+    <a href="/" class="button home-button">Home</a>
+    <a href="/favorites-page" class="button1">Favorite Recipes</a>
+    <a href="/search-page" class="button1">Search and Filter Recipes</a>
+  </nav>
+
+  <!-- Add Clear All Button -->
+  <button id="clearMealPlan" class="button clear-all">Clear All</button>
+
+  <div class="meal-planner">
+    <table>
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Breakfast</th>
+          <th>Lunch</th>
+          <th>Dinner</th>
+        </tr>
+      </thead>
+      <tbody id="mealPlanTable">
+        <tr>
+          <td>Monday</td>
+          <td><button class="meal-slot" data-day="Monday" data-meal="Breakfast">Add Recipe</button></td>
+          <td><button class="meal-slot" data-day="Monday" data-meal="Lunch">Add Recipe</button></td>
+          <td><button class="meal-slot" data-day="Monday" data-meal="Dinner">Add Recipe</button></td>
+        </tr>
+        <% ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(day => { %>
+        <tr>
+          <td><%= day %></td>
+          <td><button class="meal-slot" data-day="<%= day %>" data-meal="Breakfast">Add Recipe</button></td>
+          <td><button class="meal-slot" data-day="<%= day %>" data-meal="Lunch">Add Recipe</button></td>
+          <td><button class="meal-slot" data-day="<%= day %>" data-meal="Dinner">Add Recipe</button></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal for selecting recipes -->
+  <div id="recipeModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <h2>Select a Recipe</h2>
+      <div id="favoriteRecipes"></div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.meal-slot').forEach(button => {
+      button.addEventListener('click', async () => {
+        const day = button.dataset.day;
+        const meal = button.dataset.meal;
+
+        const modal = document.getElementById('recipeModal');
+        const closeModal = document.getElementById('closeModal');
+        const favoriteRecipesDiv = document.getElementById('favoriteRecipes');
+
+        try {
+          // Fetch all favorite recipes
+          const response = await fetch('/favorites');
+          const data = await response.json();
+
+          if (data.favorites.length) {
+            favoriteRecipesDiv.innerHTML = data.favorites.map(recipe => `
+              <div class="recipe-card">
+                <h3>${recipe.name}</h3>
+                <p>${recipe.description || 'No description available.'}</p>
+                <button class="select-recipe" data-recipe-id="${recipe.recipe_id}" data-day="${day}" data-meal="${meal}">
+                  Select
+                </button>
+              </div>
+            `).join('');
+          } else {
+            favoriteRecipesDiv.innerHTML = '<p>No favorite recipes available.</p>';
+          }
+
+          // Show modal
+          modal.style.display = 'block';
+
+          // Add event listeners to select recipe buttons
+          document.querySelectorAll('.select-recipe').forEach(selectButton => {
+            selectButton.addEventListener('click', async () => {
+              const recipeId = selectButton.dataset.recipeId;
+
+              // Save the selected recipe to the meal plan
+              await fetch('/meal-planner/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ day, meal, recipeId })
+              });
+
+              // Update the table
+              button.textContent = selectButton.parentElement.querySelector('h3').textContent;
+              modal.style.display = 'none';
+            });
+          });
+
+        } catch (error) {
+          console.error('Error fetching favorite recipes:', error);
+        }
+
+        closeModal.onclick = () => {
+          modal.style.display = 'none';
+        };
+      });
+    });
+
+    // Fetch and populate the saved meal plan
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const response = await fetch('/meal-planner/fetch');
+        const { mealPlan } = await response.json();
+
+        // Update the table with the saved meal plan
+        mealPlan.forEach(plan => {
+          const button = document.querySelector(`.meal-slot[data-day="${plan.day}"][data-meal="${plan.meal_type}"]`);
+          if (button) {
+            button.textContent = plan.recipe_name;
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching meal plan:', error);
+      }
+    });
+
+    // Clear all meal plan data
+    document.getElementById('clearMealPlan').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/meal-planner/clear', { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          document.querySelectorAll('.meal-slot').forEach(button => {
+            button.textContent = 'Add Recipe';
+          });
+        } else {
+            console.error('Failed to clear meal plan.');
+        }
+      } catch (error) {
+        console.error('Error clearing meal plan:', error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 20px 0;
+  color: #333;
+}
+
+/* Button Styles */
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff;
+  text-decoration: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+.button:active {
+  background-color: #004085;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Dropdown Styling */
+select {
+  width: 300px;
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Search Form Styles */
+.search-container form,
+.favorites-container form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.search-container select,
+.favorites-container select,
+.search-container button,
+.favorites-container button {
+  height: 40px;
+  font-size: 16px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.search-container button,
+.favorites-container button {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.search-container button:hover,
+.favorites-container button:hover {
+  background-color: #0056b3;
+}
+
+#searchForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#searchForm select {
+  height: 40px;
+  font-size: 16px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#searchForm button[type="submit"],
+#favoritesSearchForm button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  height: 40px;
+  font-size: 16px;
+  padding: 0 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+#searchForm button:hover {
+  background-color: #0056b3;
+}
+
+/* Results and Favorites Container */
+#searchResults,
+#favoritesResults {
+  width: 80%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#searchResults div {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Recipe Card Styles */
+.recipe-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #333;
+}
+
+.recipe-card p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.recipe-card strong {
+  color: #000;
+}
+
+.recipe-card button {
+  background-color: #ffffff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Table Styles */
+table {
+  width: 90%;
+  margin: 20px auto;
+  border-collapse: collapse;
+  border: 1px solid #ddd;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+th, td {
+  padding: 15px 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+caption {
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+}
+
+/* Chart Container */
+.chart-container {
+  width: 80%;
+  max-width: 900px;
+  height: 500px;
+  margin: 20px auto;
+  background: white;
+  padding: 15px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+/* Pagination */
+#pagination {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pagination-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.pagination-button:hover {
+  background-color: #0056b3;
+}
+
+.pagination-button.active {
+  background-color: #03204a;
+  cursor: default;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 8px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: black;
+}
+
+.favorites {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.favorites:hover {
+  background-color: #0056b3;
+}
+
+button.remove-favorite-button {
+  background-color: #dc3545; /* Red background */
+  color: white; /* White text */
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button.remove-favorite-button:hover {
+  background-color: #c82333; /* Darker red on hover */
+}
+
+
+.button1 {
+  padding: 10px 20px;
+  position: relative;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff; /* Bootstrap-like primary color */
+  text-decoration: none;
+  border: none;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.button1:hover {
+  background-color: #0056b3; /* Darker shade for hover */
+}
+
+.button1:active {
+  background-color: #004085; /* Even darker shade for active state */
+}
+
+/* Style for the Select Recipe button in the modal */
+button.select-recipe {
+  background-color: #007bff; /* Blue background */
+  color: white; /* White text */
+  border: none; /* Remove border */
+  padding: 8px 12px; /* Add padding */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor */
+  text-align: center; /* Center align text */
+  transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+button.select-recipe:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+button.select-recipe:active {
+  background-color: #004085; /* Even darker blue when active */
+}

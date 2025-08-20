@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search and Filter Recipes</title>
+  <link rel="stylesheet" type="text/css" href="/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <h1>Search and Filter Recipes</h1>
+    <nav>
+        <a href="/" class="button home-button">Home</a>
+        <a href="/meal-planner" class="button">Meal Planner</a>
+        <a href="/favorites-page" class="favorites">Favorites</a>
+    </nav>
+
+  <div class="search-container">
+    <form id="searchForm">
+      <select id="searchTag" name="tag">
+        <option value="">Filter by tag</option>
+      </select>
+      <select id="searchTerm" name="searchTerm">
+        <option value="">Filter by search term</option>
+      </select>
+      <select id="searchIngredient" name="ingredient">
+        <option value="">Filter by ingredient</option>
+      </select>
+      <select id="sortOrder" name="sort">
+        <option value="">Sort by</option>
+        <option value="alphabetical">Alphabetical</option>
+        <option value="servings">Number of Servings</option>
+      </select>
+      <button type="submit">Search</button>
+      <button type="button" id="clearFilters">Clear Filters</button>
+    </form>
+  
+    <div id="searchResults"></div>
+    <div id="pagination"></div>
+  </div>
+    
+
+  <script>
+    window.onload = async () => {
+  try {
+    const response = await fetch("/filters");
+    const { tags, searchTerms, ingredients } = await response.json();
+
+    // Populate tag dropdown
+    const tagDropdown = document.getElementById("searchTag");
+    tags.forEach(tag => {
+      const option = document.createElement("option");
+      option.value = tag.tag_name;
+      option.textContent = tag.tag_name;
+      tagDropdown.appendChild(option);
+    });
+
+    // Populate search term dropdown
+    const searchTermDropdown = document.getElementById("searchTerm");
+    searchTerms.forEach(term => {
+      const option = document.createElement("option");
+      option.value = term.search_term;
+      option.textContent = term.search_term;
+      searchTermDropdown.appendChild(option);
+    });
+
+    // Populate ingredient dropdown
+    const ingredientDropdown = document.getElementById("searchIngredient");
+    ingredients.forEach(ingredient => {
+      const option = document.createElement("option");
+      option.value = ingredient.ingredient_name;
+      option.textContent = ingredient.ingredient_name;
+      ingredientDropdown.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading filters:", error);
+  }
+};
+
+
+document.getElementById("searchForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const tag = document.getElementById("searchTag").value;
+  const searchTerm = document.getElementById("searchTerm").value;
+  const ingredient = document.getElementById("searchIngredient").value;
+  const sort = document.getElementById("sortOrder").value;
+
+  await fetchAndRenderResults(tag, searchTerm, ingredient, sort, 1);
+});
+
+document.getElementById("clearFilters").addEventListener("click", () => {
+  document.getElementById("searchTag").value = "";
+  document.getElementById("searchTerm").value = "";
+  document.getElementById("searchIngredient").value = "";
+  document.getElementById("sortOrder").value = "";
+  document.getElementById("searchResults").innerHTML = "";
+  document.getElementById("pagination").innerHTML = "";
+});
+
+async function fetchAndRenderResults(tag, searchTerm, ingredient, sort, page) {
+  try {
+    const response = await fetch(`/search?tag=${tag}&searchTerm=${searchTerm}&ingredient=${ingredient}&sort=${sort}&page=${page}`);
+    const { recipes, totalCount } = await response.json();
+
+    const resultsDiv = document.getElementById("searchResults");
+    resultsDiv.innerHTML = recipes.length
+      ? recipes.map(result => `
+        <div class="recipe-card">
+          <h3>${result.name}</h3>
+          <p><strong>Description:</strong> ${result.description || "N/A"}</p>
+          <p><strong>Servings:</strong> ${result.servings || "N/A"}</p>
+          <p><strong>Ingredients:</strong> ${result.ingredients || "N/A"}</p>
+          <button class="favorite-button" data-recipe-id="${result.recipe_id}">
+            <i class="fa fa-heart" style="color: grey;"></i>
+          </button>
+        </div>
+      `).join("")
+      : "<p>No recipes found.</p>";
+
+    // Add event listeners for favorite buttons after rendering
+    document.querySelectorAll(".favorite-button").forEach(button => {
+      button.addEventListener("click", async () => {
+        const recipeId = button.dataset.recipeId;
+        const heartIcon = button.querySelector("i");
+
+        if (heartIcon.style.color === "grey") {
+          // Add to favorites
+          try {
+            const response = await fetch("/favorites/add", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ recipe_id: recipeId }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              heartIcon.style.color = "red"; // Indicate favorite
+            } else {
+                console.error(data.message);
+            }
+          } catch (error) {
+            console.error("Error adding recipe to favorites:", error);
+          }
+        } else {
+          // Remove from favorites
+          try {
+            const response = await fetch("/favorites/remove", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ recipe_id: recipeId }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              heartIcon.style.color = "grey"; // Indicate not favorite
+            } else {
+                console.error(data.message);
+            }
+          } catch (error) {
+            console.error("Error removing recipe from favorites:", error);
+          }
+        }
+      });
+    });
+
+    // Render pagination
+    const paginationDiv = document.getElementById("pagination");
+    const totalPages = Math.ceil(totalCount / 10);
+    paginationDiv.innerHTML = Array.from({ length: totalPages }, (_, i) => `
+      <button 
+        class="pagination-button ${page == i + 1 ? "active" : ""}" 
+        data-page="${i + 1}">
+        ${i + 1}
+      </button>
+    `).join("");
+
+    document.querySelectorAll(".pagination-button").forEach(button => {
+      button.addEventListener("click", () => {
+        const selectedPage = button.dataset.page;
+        fetchAndRenderResults(tag, searchTerm, ingredient, sort, selectedPage);
+      });
+    });
+
+  } catch (error) {
+    console.error("Error fetching search results:", error);
+  }
+}
+
+document.querySelectorAll(".favorite-button").forEach(button => {
+  button.addEventListener("click", async () => {
+    const recipeId = button.dataset.recipeId;
+    const heartIcon = button.querySelector("i");
+
+    if (heartIcon.style.color === "grey") {
+      // Add to favorites
+      try {
+        const response = await fetch("/favorites/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipe_id: recipeId }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          heartIcon.style.color = "red"; // Indicate favorite
+          alert("Recipe added to favorites!");
+        } else {
+          console.error(data.message);
+          alert("Failed to add recipe to favorites.");
+        }
+      } catch (error) {
+        console.error("Error adding recipe to favorites:", error);
+      }
+    } else {
+      // Remove from favorites
+      try {
+        const response = await fetch("/favorites/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recipe_id: recipeId }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          heartIcon.style.color = "grey"; // Indicate not favorite
+          alert("Recipe removed from favorites!");
+        } else {
+          console.error(data.message);
+          alert("Failed to remove recipe from favorites.");
+        }
+      } catch (error) {
+        console.error("Error removing recipe from favorites:", error);
+      }
+    }
+  });
+});
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recipe Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" type="text/css" href="/main.css">
+</head>
+<body>
+  <h1>Recipe Analysis</h1>
+  <nav>
+    <a href="/" class="button">Home</a>
+    <a href="/search-page" class="button">Search and Filter Recipes</a>
+    <a href="/favorites-page" class="button">Favorite Recipes</a> 
+    <a href="/meal-planner" class="button">Meal Planner</a>
+  </nav>
+
+  <div class="dropdown-container">
+    <form action="/query" method="get">
+      <select name="query">
+        <option value="popularVegetarian" <% if (selectedQuery === 'popularVegetarian') { %>selected<% } %>>Most Popular Vegetarian Recipes</option>
+        <option value="specificIngredient" <% if (selectedQuery === 'specificIngredient') { %>selected<% } %>>Recipes with Garlic or Olive Oil</option>
+        <option value="commonLowCalorieTag" <% if (selectedQuery === 'commonLowCalorieTag') { %>selected<% } %>>Most Common Tag for Low-Calorie Recipes</option>
+        <option value="topSteps" <% if (selectedQuery === 'topSteps') { %>selected<% } %>>Top 5 Recipes by Steps</option>
+        <option value="topIngredients" <% if (selectedQuery === 'topIngredients') { %>selected<% } %>>Top 10 Ingredients</option>
+        <option value="mealType" <% if (selectedQuery === 'mealType') { %>selected<% } %>>Brunch or Dinner Recipes</option>
+
+        <option value="topTagsForTopIngredients" <% if (selectedQuery === 'topTagsForTopIngredients') { %>selected<% } %>>Top Tags for Top Ingredients</option>
+        <option value="tagsForChocolateRecipes" <% if (selectedQuery === 'tagsForChocolateRecipes') { %>selected<% } %>>Tags for Chocolate Recipes</option>
+
+      </select>
+      <button type="submit">Run Query</button>
+    </form>
+  </div>
+  <div>
+    <button id="toggleView">Switch to Table</button>
+  </div>
+  <div id="chartContainer">
+    <canvas id="chart" width="600" height="500"></canvas>
+  </div>
+  <div id="tableContainer" style="display: none;">
+    <table>
+      <caption>Recipe Data Table</caption>
+      <thead>
+        <tr>
+          <th>Label</th>
+          <th>Value</th>
+          <% if (chartData && chartData.datasets[0] && chartData.datasets[0].recipeNames.length > 0) { %>
+          <th>Recipe Names</th>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (chartData && chartData.labels.length > 0) { %>
+          <% chartData.labels.forEach((label, index) => { %>
+            <tr>
+              <td><%= label %></td>
+              <td><%= chartData.datasets[0].data[index] %></td>
+              <% if (chartData.datasets[0].recipeNames.length > 0) { %>
+              <td><%= chartData.datasets[0].recipeNames[index] %></td>
+              <% } %>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="3">No data available</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+  <script>
+    const chartData = <%- JSON.stringify(chartData || {}) %>;
+    const selectedQuery = "<%= selectedQuery %>";
+
+    if (chartData && chartData.labels && chartData.datasets) {
+      const ctx = document.getElementById("chart").getContext("2d");
+
+      let config;
+
+      if (selectedQuery === "specificIngredient") {
+        // Custom configuration for the "specificIngredient" query
+        const garlicColor = "rgba(255, 99, 132, 0.7)";
+        const oliveOilColor = "rgba(54, 162, 235, 0.7)";
+
+        config = {
+          type: 'bar',
+          data: {
+            labels: chartData.labels,
+            datasets: [
+              {
+                label: "Garlic",
+                data: chartData.labels.map(label => label === "garlic" ? chartData.datasets[0].data[chartData.labels.indexOf(label)] : 0),
+                backgroundColor: garlicColor,
+              },
+              {
+                label: "Olive Oil",
+                data: chartData.labels.map(label => label === "olive oil" ? chartData.datasets[0].data[chartData.labels.indexOf(label)] : 0),
+                backgroundColor: oliveOilColor,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+              },
+            },
+            scales: {
+              x: { title: { display: true, text: "Recipes" } },
+              y: { title: { display: true, text: "Count" }, beginAtZero: true },
+            },
+          },
+        };
+      } else if (selectedQuery === "mealType") {
+        // Custom configuration for the "mealType" query
+        const brunchColor = "rgba(75, 192, 192, 0.7)";
+        const dessertsColor = "rgba(255, 159, 64, 0.7)";
+
+        config = {
+          type: 'bar',
+          data: {
+            labels: chartData.labels,
+            datasets: [
+              {
+                label: "Brunch",
+                data: chartData.labels.map(label => label === "brunch" ? chartData.datasets[0].data[chartData.labels.indexOf(label)] : 0),
+                backgroundColor: brunchColor,
+              },
+              {
+                label: "Desserts",
+                data: chartData.labels.map(label => label === "desserts" ? chartData.datasets[0].data[chartData.labels.indexOf(label)] : 0),
+                backgroundColor: dessertsColor,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+              },
+            },
+            scales: {
+              x: { title: { display: true, text: "Recipes" } },
+              y: { title: { display: true, text: "Count" }, beginAtZero: true },
+            },
+          },
+        };
+      } 
+      else if (selectedQuery === "topIngredients") {
+        // Custom configuration for the "topIngredients" query (no legend)
+        config = {
+          type: 'bar',
+          data: {
+            labels: chartData.labels,
+            datasets: chartData.datasets,
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false, // Hide the legend
+              },
+            },
+            scales: {
+              x: { title: { display: true, text: "Ingredients" } },
+              y: { title: { display: true, text: "Usage" }, beginAtZero: true },
+            },
+          },
+        };
+      } else if (selectedQuery === "topTagsForTopIngredients") {
+  // Configuration for the "Top Tags for Top Ingredients" query
+  config = {
+    type: 'bar',
+    data: {
+      labels: chartData.labels,
+      datasets: chartData.datasets,
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false, // Hide legend
+        },
+        tooltip: {
+          callbacks: {
+            label: function (tooltipItem) {
+              const recipeNames = chartData.datasets[0].recipeNames || [];
+              const names = recipeNames[tooltipItem.dataIndex] || "No Recipes";
+              return `${tooltipItem.label}: ${tooltipItem.raw} (Recipes: ${names})`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Tags",
+          },
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Count",
+          },
+        },
+      },
+    },
+  };
+} else if (selectedQuery === "tagsForChocolateRecipes") {
+  // Configuration for the "Tags for Chocolate Recipes" query
+  config = {
+    type: 'bar',
+    data: {
+      labels: chartData.labels,
+      datasets: chartData.datasets,
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false, // Hide legend
+        },
+        tooltip: {
+          callbacks: {
+            label: function (tooltipItem) {
+              const recipeNames = chartData.datasets[0].recipeNames || [];
+              const names = recipeNames[tooltipItem.dataIndex] || "No Recipes";
+              return `${tooltipItem.label}: ${tooltipItem.raw} (Recipes: ${names})`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Tags for Chocolate",
+          },
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Frequency",
+          },
+        },
+      },
+    },
+  };
+}
+else {
+        // Default configuration for other queries
+        config = {
+          type: 'bar',
+          data: {
+            labels: chartData.labels,
+            datasets: chartData.datasets,
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+              },
+            },
+            scales: {
+              x: { title: { display: true, text: "Recipes" } },
+              y: { title: { display: true, text: "Count" }, beginAtZero: true },
+            },
+          },
+        };
+      }
+
+      new Chart(ctx, config);
+    }
+
+    const toggleButton = document.getElementById("toggleView");
+    const chartContainer = document.getElementById("chartContainer");
+    const tableContainer = document.getElementById("tableContainer");
+
+    toggleButton.addEventListener("click", () => {
+      if (chartContainer.style.display === "none") {
+        chartContainer.style.display = "block";
+        tableContainer.style.display = "none";
+        toggleButton.textContent = "Switch to Table";
+      } else {
+        chartContainer.style.display = "none";
+        tableContainer.style.display = "block";
+        toggleButton.textContent = "Switch to Graph";
+      }
+    });
+  </script>
+</body>
+</html>
